@@ -75,6 +75,11 @@ def show_eda_table(graphs):
     print(t)
 
 
+def sparsify(G, threshold):
+    for u,v,data in G.edges(data=True):
+        if data['weight'] < threhold:
+            G.remove_edge(u,v)
+    return G
 
 
 if __name__ == '__main__':
