@@ -65,11 +65,16 @@ def show_eda_table(graphs):
     for G in graphs:
         info = []
         info += [nx.number_of_nodes(G), nx.number_of_edges(G)]
-        info.append(len(max(nx.connected_components(G), key=len)))
+        try:
+            info.append(len(max(nx.connected_components(G), key=len)))
+        except:
+            info.append(len(max(nx.strongly_connected_components(G), key=len)))
         edge_weights = [d['weight'] for (n1, n2, d) in G.edges(data=True)]
         info += [np.mean(edge_weights), np.std(edge_weights)]
         t.add_row(info)
     print(t)
+
+
 
 
 if __name__ == '__main__':
