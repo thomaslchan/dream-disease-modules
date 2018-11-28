@@ -7,7 +7,7 @@ from numpy.linalg import inv
 from scipy.spatial.distance import pdist, squareform
 from prettytable import PrettyTable
 
-DATA = 'projdata/1_networks/original'
+DATA = '../data/networks/original'
 
 
 def read_data(path):
@@ -17,7 +17,7 @@ def read_data(path):
         print(filename)
         start = time.time()
         i += 1
-        g_type = nx.OrderedDiGraph if i == 3 else nx.OrderedGraph
+        g_type = nx.DiGraph() if i == 3 else nx.Graph()
         G = nx.read_weighted_edgelist(os.path.join(path, filename),
                                     create_using=g_type)
         graphs.append(G)
@@ -77,7 +77,7 @@ def show_eda_table(graphs):
 
 def sparsify(G, threshold):
     for u,v,data in G.edges(data=True):
-        if data['weight'] < threhold:
+        if data['weight'] < threshold:
             G.remove_edge(u,v)
     return G
 
