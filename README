@@ -5,5 +5,5 @@ Thomas Chan
 Applying Learning Techniques to the DREAM Challenge.
 
 Command:
-python aggregate.py projdata/1_networks/original
+python aggregate.py
 

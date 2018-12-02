@@ -1,49 +1,51 @@
 import sys
-import os
 import numpy as np
 import networkx as nx
 
-def read_data(filename):
-    G = nx.read_weighted_edgelist(filename)
-    return nx.to_numpy_matrix(G) 	
-
 def build_transition_matrix(adjacency_graph):
-    degs = adjacency_graph.sum(axis=1)
-
-    transition = adjacency_graph / degs[:,None]
-    transition[degs==0,:] = 0
-    transition[degs==0,degs==0] = 1
+    n = np.size(adjacency_graph[0])
+    
+    transition = np.zeros((n,n))
+    
+    for i in range(n):
+        s = np.sum(adjacency_graph[i])
+        if s:
+            transition[i] = np.divide(adjacency_graph[i], s)
+        else:
+            transition[i][i] = 1
     return transition
 
-
 def calc_hescotts(transition, iters, v=True, n=None):
-    # params v and n are not used, left for compatibility with original dsdcore script
-    nRw = iters
-    p = transition
-    n = p.shape[0]
-    c = np.eye(n)
-    c0 = np.eye(n)
-    for i in xrange(nRw):
-        c = np.dot(c, p) + c0
-    return c
+    if n is None:
+        n = np.size(transition[0])
+    m = np.size(transition[0])
+    hescotts = np.zeros((n,m))
+    for i in range(n): hescotts[i,i] = 1
+    for i in range(iters):
+        if v: print "Calculating hescotts for step "+str(i+1)+"..."
+        hescotts = np.dot(hescotts, transition)
+        for i in range(n): hescotts[i,i]+=1
+    return hescotts
 
-
-def calc_dsd(transition):
-	return squareform(pdist(transition,metric='cityblock'))
-
-
-def add_self_edges(adjacency_graph, base_weight=1):
-    n = np.size(adjacency_graph[0])
-    ident = np.identity(n)*base_weight
-    return np.add(adjacency_graph,ident)
+def calc_dsd(hescotts):
+    n = np.size(hescotts[:,0])
+    dsd = np.zeros((n,n))
+    for i in range(n):
+        for j in range(i+1,n):
+            d = np.linalg.norm((hescotts[i,:]-hescotts[j,:]), ord=1)
+            dsd[i][j] = d
+            dsd[j][i] = d
+    return dsd
 
 def main(argv):
-    adj = read_data(argv[1])
+    G = nx.read_weighted_edgelist(argv[1])
+    nlist = list(map(str, range(0, 3)))
+    adj = nx.to_numpy_matrix(G, nodelist=nlist)
     trans = build_transition_matrix(adj)
     hescotts = calc_hescotts(trans, 7)
     dsd = calc_dsd(hescotts)
-    G = nx.from_numpy_matrix(dsd)
-    nx.write_weighted_edgelist(G, argv[1] + ".dsd", delimiter='\t')
+    np.save(argv[2], dsd)
+
 
 if __name__ == '__main__':
     main(sys.argv)
