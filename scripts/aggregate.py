@@ -44,6 +44,38 @@ def score(adj, gene_ids):
 	enr = gp.enrichr(gene_list=v)
 	scores.append(enr)
 
+def step(adjs, wvec, dwvec):
+    agg = np.full_like(adjs[0], (w0[-1] + dw0[-1]))
+    for i in range(0, len(adj)):
+        agg = np.add(agg, np.multiply(adj[i], (wvec[i] + dwvec[i])))
+    return agg
+
+def learn(adjs, wvec, gene_ids):
+    stepsize = .1
+    while(true):
+        maxscore = 0
+        maxvec = wvec
+        for i in range(0, len(wvec)):
+            downvec = wvec[:][i] -= stepsize
+            downstep = step(adjs, wvec, downvec)
+            downscore = score(downstep, gene_ids)
+            upvec = wvec[:][i] += stepsize
+            upstep = step(adjs, wvec, upvec)
+            upscore = score(upstep, gene_ids)
+
+            new_max = max(maxscore, downscore, upscore) == downscore)
+            if (new_max == downscore):
+                maxscore = downscore
+                maxvec = downvec
+            elif (new_max == upscore):
+                maxscore = upscore
+                maxvec = upvec
+
+        if (wvec == maxvec):
+            break
+        else:
+            wvec = max_vec
+
 def show_eda_table(graphs):
     cols = ['Nodes', 'Edges', 'Size of Largest Component', 
             'Mean Edge Weight', 'Std. Dev. Edge Weight']
@@ -60,7 +92,6 @@ def show_eda_table(graphs):
         t.add_row(info)
     print(t)
 
-
 def sparsify(G, threshold):
     for u,v,data in G.edges(data=True):
         if data['weight'] < threshold:
@@ -70,5 +101,6 @@ def sparsify(G, threshold):
 if __name__ == '__main__':
     adjs = load_data(DATA)
     gene_ids = gene_id_dict(GENEIDS)
-    wvec = [0, 0, 0, 0, 0, 0]
-    w0 = 0
+    wvec = np.zeros(7)
+    wvec = learn(adjs, wvec, gene_ids)
+    print(wvec)
