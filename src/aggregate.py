@@ -155,8 +155,8 @@ def to_file(clusters, scoreVal):
 	file.write("{}\n".format(scoreVal))
 	for i in range(0, len(clusters)):
 	    file.write("Cluster {}:\n".format(i+1))
-	    for g in cluster[i]:
-		file.write("{}\t".format(g))
+	    for j in range(0, len(clusters[i])):
+		file.write("{}\t".format(clusters[i][j]))
 	    file.write("\n")
 	
 
@@ -169,14 +169,13 @@ if __name__ == '__main__':
     adjs = resize_networks(networks, nodelists)
 
     wvec = [1, 1, 1, 1, 1, 1, 0]
-    k = 2
+    k = 100
     pval_cutoff = .05
     agg = aggregate(adjs, wvec)
     embedding = gcn(agg, go_terms, gene_ids)
     clusters = cluster(k, embedding, gene_ids)
     scoreVal = score(pval_cutoff, clusters, go_terms)
     to_file(clusters, scoreVal)
-
 """
 
 def show_eda_table(graphs):
