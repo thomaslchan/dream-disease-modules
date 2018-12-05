@@ -175,7 +175,7 @@ if __name__ == '__main__':
     embedding = gcn(agg, go_terms, gene_ids)
     clusters = cluster(k, embedding, gene_ids)
     scoreVal = score(pval_cutoff, clusters, go_terms)
-
+    to_file(clusters, scoreVal)
 
 """
 
