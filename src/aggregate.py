@@ -82,6 +82,13 @@ def aggregate(adjs, wvec):
                 + str(float(end-start)) + " seconds.")
     return agg
 
+def gcn(agg, go_terms, gene_ids):
+    start = time.time()
+    end = time.time()
+    print("Condensed aggregated network in "
+                + str(float(end-start)) + " seconds.")
+    return agg
+
 def cluster(k, adj, gene_ids):
     start = time.time()
     clustering = KMeans(n_clusters=k)
@@ -143,6 +150,15 @@ def score(pval_cutoff, clusters, go_terms):
                 + str(float(end-start)) + " seconds.")
     return score/float(num_clusters)
 
+def to_file(clusters, scoreVal):
+    with open("output.txt", "w+") as file:
+	file.write("{}\n".format(scoreVal))
+	for i in range(0, len(clusters)):
+	    file.write("Cluster {}:\n".format(i+1))
+	    for g in cluster[i]:
+		file.write("{}\t".format(g))
+	    file.write("\n")
+	
 
 if __name__ == '__main__':
     networks = load_networks(DSDs)
@@ -156,9 +172,9 @@ if __name__ == '__main__':
     k = 2
     pval_cutoff = .05
     agg = aggregate(adjs, wvec)
-    clusters = cluster(k, agg, gene_ids)
+    embedding = gcn(agg, go_terms, gene_ids)
+    clusters = cluster(k, embedding, gene_ids)
     scoreVal = score(pval_cutoff, clusters, go_terms)
-
 
 
 """
