@@ -117,6 +117,7 @@ def calc_pval(w, x, y, z):
 
 def score(pval_cutoff, clusters, go_terms):
     num_genes = 21115
+    num_terms = 20689
     score = 0
     num_clusters = len(clusters)
     for i in range(0, num_clusters):
@@ -136,13 +137,12 @@ def score(pval_cutoff, clusters, go_terms):
                     num = 0
                 score_dict[go[k][0]] = [num + 1 , go[k][1]]
         score_vec = list(score_dict.items())
-        len_score_vec = len(score_vec)
         pval_vec = []
         for j in range(0, len(score_vec)):
             in_cluster = score_vec[j][1][0]
             in_total = score_vec[j][1][1]
             pval = calc_pval(num_genes, cluster_size, in_total, in_cluster)
-            if (pval < pval_cutoff/float(len_score_vec)):
+            if (pval < pval_cutoff/float(num_terms)):
                 score += 1
                 break
         end = time.time()
@@ -176,6 +176,7 @@ if __name__ == '__main__':
     clusters = cluster(k, embedding, gene_ids)
     scoreVal = score(pval_cutoff, clusters, go_terms)
     to_file(clusters, scoreVal)
+
 """
 
 def show_eda_table(graphs):
