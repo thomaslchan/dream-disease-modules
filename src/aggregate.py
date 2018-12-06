@@ -52,31 +52,31 @@ def gene_id_dict(filename):
 #         agg = np.add(agg, np.multiply(adj[i], (wvec[i] + dwvec[i])))
 #     return agg
 
-# def learn(adjs, wvec, gene_ids):
-#     stepsize = .1
-#     while(true):
-#         maxscore = 0
-#         maxvec = wvec
-#         for i in range(0, len(wvec)):
-#             downvec = wvec[:][i] -= stepsize
-#             downstep = step(adjs, wvec, downvec)
-#             downscore = score(downstep, gene_ids)
-#             upvec = wvec[:][i] += stepsize
-#             upstep = step(adjs, wvec, upvec)
-#             upscore = score(upstep, gene_ids)
+def learn(adjs, wvec, gene_ids):
+    stepsize = .1
+    while(true):
+        maxscore = 0
+        maxvec = wvec
+        for i in range(0, len(wvec)):
+            downvec = wvec[:][i] -= stepsize
+            downstep = step(adjs, wvec, downvec)
+            downscore = score(downstep, gene_ids)
+            upvec = wvec[:][i] += stepsize
+            upstep = step(adjs, wvec, upvec)
+            upscore = score(upstep, gene_ids)
 
-#             new_max = max(maxscore, downscore, upscore) == downscore)
-#             if (new_max == downscore):
-#                 maxscore = downscore
-#                 maxvec = downvec
-#             elif (new_max == upscore):
-#                 maxscore = upscore
-#                 maxvec = upvec
+            new_max = max(maxscore, downscore, upscore) == downscore)
+            if (new_max == downscore):
+                maxscore = downscore
+                maxvec = downvec
+            elif (new_max == upscore):
+                maxscore = upscore
+                maxvec = upvec
 
-#         if (wvec == maxvec):
-#             break
-#         else:
-#             wvec = max_vec
+        if (wvec == maxvec):
+            break
+        else:
+            wvec = max_vec
 
 def show_eda_table(graphs):
     cols = ['Nodes', 'Edges', 'Size of Largest Component', 
