@@ -1,19 +1,15 @@
-from __future__ import division
 import sys, os, operator, time, math, datetime
 import networkx as nx
 import numpy as np
-import mpmath as mp
 
 from funcassociate.client import _fc as fc
-from numpy.linalg import inv
-from scipy.spatial.distance import pdist, squareform
 from sklearn.cluster import KMeans
 
 DSDs = '../data/networks/DSDs'
 NODELISTS = '../data/nodelists'
 GENEFILE = '../data/ids/gene_ids.txt'
-GOFILE = '../data/go/go_terms.txt'
 
+# Takes a path and loads all npy files in that directory into np matrices
 def load_networks(path):
     start = time.time()
     adjs = []
@@ -25,6 +21,7 @@ def load_networks(path):
         str(datetime.timedelta(seconds=int(end-start))))
     return adjs
 
+# Takes a path and reads all nodelists files in that directory into lists
 def read_nodelists(path):
     nodelists = []
     for filename in sorted(os.listdir(path)):
@@ -35,6 +32,8 @@ def read_nodelists(path):
             nodelists.append(nodelist)
     return nodelists
 
+# Takes a filename that corresponds to a list of key value pairs and creates a
+# dictionary of gene ids 
 def gene_id_dict(filename):
     gene_ids = {}
     with open(filename, "r") as file:
@@ -43,6 +42,9 @@ def gene_id_dict(filename):
             gene_ids[int(d[1])] = d[0]
     return gene_ids
 
+# Takes a list of np matrices and a list of nodes of the same length and resizes
+# the matrices to the same size, where each gene is the same index in all
+# matrices
 def resize_networks(networks, nodelists):
     start = time.time()
     len_networks = len(networks)
@@ -59,7 +61,8 @@ def resize_networks(networks, nodelists):
         str(datetime.timedelta(seconds=int(end-start))))
     return adjs
 
-
+# Takes a list of np matrices and a weight vector and sums all matrices together
+# scaled by the weights in the vector and added to a regularizer value.
 def aggregate(adjs, wvec):
     start = time.time()
     agg = np.full_like(adjs[0], (wvec[-1]))
@@ -70,10 +73,12 @@ def aggregate(adjs, wvec):
         str(datetime.timedelta(seconds=int(end-start))))
     return agg
 
-def cluster(k, adj, gene_ids):
+# Takes a k value, an aggregated matrix, and a dictionary of gene ids. Uses
+# k-means clustering on the aggregated matrix to produce clusters of genes
+def cluster(k, agg, gene_ids):
     start = time.time()
     clustering = KMeans(n_clusters=k)
-    labels = clustering.fit(adj).labels_
+    labels = clustering.fit(agg).labels_
     clusters = d = [[] for x in xrange(k)]
     for i in range(0, labels.size):
            clusters[labels[i]].append(gene_ids[i])
@@ -82,6 +87,9 @@ def cluster(k, adj, gene_ids):
         str(datetime.timedelta(seconds=int(end-start))))
     return clusters
 
+# Takes a p value and a set of clusters and scores each cluster using Func
+# Associate. Return the percentage of clusters that are found to be enriched, as
+# well as the best GO term of those enriched clusters
 def score(pval_cutoff, clusters):
     start = time.time()
     score = 0
@@ -92,7 +100,6 @@ def score(pval_cutoff, clusters):
             ret = func.functionate(query=clusters[i], species="Homo sapiens",
 		namespace="hgnc_symbol", cutoff=(1-pval_cutoff))["over"]
 	    p = ret[0][4]*(ret[0][1])
-            print(ret[0])
             cluster_terms.append(ret[0][7])
         except:
 	    p = 1
@@ -104,8 +111,9 @@ def score(pval_cutoff, clusters):
         str(datetime.timedelta(seconds=int(end-start))))
     return score/float(len(clusters)), cluster_terms
 
+# Takes a set of clusters, their GO terms, a score, and the weight vector used
+# to produce these results and writes this information to file
 def to_file(clusters, cluster_terms, scoreVal, wvec):
-    start = time.time()
     with open("output.txt", "w+") as file:
 	file.write("{}%\tWeights: {}\tRegularization: {}\n"
             .format(scoreVal * 100, wvec[:-1], wvec[-1]))
@@ -115,34 +123,21 @@ def to_file(clusters, cluster_terms, scoreVal, wvec):
 		file.write("{}\t".format(clusters[i][j]))
 	    file.write("\n")
     end = time.time()
-    print("Wrote clusters in " +
-        str(datetime.timedelta(seconds=int(end-start))))
 	
-
 if __name__ == '__main__':
+    # Load data
     networks = load_networks(DSDs)
     nodelists = read_nodelists(NODELISTS)
     gene_ids = gene_id_dict(GENEFILE)
 
+    # Parameters
     wvec = [.2, .2, .1, .1, .3, .1, 1.5]
-    k = 300
+    k = 200
     pval_cutoff = .05
+
+    # Resize, aggregate, cluster, score, and output
     adjs = resize_networks(networks, nodelists)
     agg = aggregate(adjs, wvec)
     clusters = cluster(k, agg, gene_ids)
     scoreVal, cluster_terms = score(pval_cutoff, clusters)
     to_file(clusters, cluster_terms, scoreVal, wvec)
-
-"""
-def go_term_dict(filename):
-    go_terms= {}
-    with open(filename, "r") as file:
-        for line in file.readlines():
-            d = line.strip().split("\t")
-            t = d[1].split(" ")
-            g = []
-            for i in range(0, len(t)):
-                g.append(map(int, t[i].split(",")))
-            go_terms[d[0]] = g
-    return go_terms
-"""
