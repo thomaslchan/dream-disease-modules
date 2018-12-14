@@ -189,7 +189,7 @@ def to_file(clusters, cluster_terms, impute_method):
     with open("output.txt", "w+") as file:
         file.write("Imputation Technique: " + impute_method)
         for i in range(0, len(clusters)):
-            file.write("Cluster {}: {}\n".format(i+1, cluster_terms[i]))
+            file.write("Cluster {}:\n".format(i+1))
             for j in range(0, len(clusters[i])):
                 file.write("{}\t".format(clusters[i][j]))
                 file.write("\n")
@@ -214,4 +214,4 @@ if __name__ == '__main__':
     agg = aggregate_dsds(adjs, impute=impute_method)
     clusters = cluster(k, agg, gene_ids)
     #scoreVal, cluster_terms = score(pval_cutoff, clusters)
-    to_file(clusters, cluster_terms, impute_method)
+    to_file(clusters, impute_method)
