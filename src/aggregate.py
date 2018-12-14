@@ -61,6 +61,28 @@ def resize_networks(networks, nodelists):
         str(datetime.timedelta(seconds=int(end-start))))
     return adjs
 
+def aggregate_dsds(matrices, impute='mean'):
+    impute_func = impute + '_impute'
+    imputed_matrices = [eval(impute_func)(m) for m in matrices]
+    return np.mean(imputed_matrices)
+
+def mean_impute(matrix):
+    return impute(matrix, np.mean(matrix))
+
+def min_impute(matrix):
+    return impute(matrix, np.min(matrix[np.nonzero(matrix)]))
+
+def max_impute(matrix):
+    return impute(matrix, np.max(matrix))
+
+def median_impute(matrix):
+    return impute(matrix, np.median(matrix))
+
+def impute(matrix, imputed_value):
+    matrix[matrix == 0] = imputed_value
+    np.fill_diagonal(matrix, 0)
+    return matrix
+
 # Takes a list of np matrices and a weight vector and sums all matrices together
 # scaled by the weights in the vector and added to a regularizer value.
 def aggregate(adjs, wvec):
@@ -98,14 +120,14 @@ def score(pval_cutoff, clusters):
     for i in range(0, len(clusters)):
         try:
             ret = func.functionate(query=clusters[i], species="Homo sapiens",
-		namespace="hgnc_symbol", cutoff=(1-pval_cutoff))["over"]
-	    p = ret[0][4]*(ret[0][1])
+            namespace="hgnc_symbol", cutoff=(1-pval_cutoff))["over"]
+            p = ret[0][4]*(ret[0][1])
             cluster_terms.append(ret[0][7])
         except:
-	    p = 1
+            p = 1
             cluster_terms.append("")
-	if (p < pval_cutoff):
-	    score += 1
+    if (p < pval_cutoff):
+        score += 1
     end = time.time()
     print("Scored clusters in " +
         str(datetime.timedelta(seconds=int(end-start))))
@@ -113,17 +135,29 @@ def score(pval_cutoff, clusters):
 
 # Takes a set of clusters, their GO terms, a score, and the weight vector used
 # to produce these results and writes this information to file
-def to_file(clusters, cluster_terms, scoreVal, wvec):
+# def to_file(clusters, cluster_terms, scoreVal, wvec):
+#     with open("output.txt", "w+") as file:
+#   file.write("{}%\tWeights: {}\tRegularization: {}\n"
+#             .format(scoreVal * 100, wvec[:-1], wvec[-1]))
+#   for i in range(0, len(clusters)):
+#       file.write("Cluster {}: {}\n".format(i+1, cluster_terms[i]))
+#       for j in range(0, len(clusters[i])):
+#       file.write("{}\t".format(clusters[i][j]))
+#       file.write("\n")
+#     end = time.time()
+
+def to_file(clusters, cluster_terms, scoreVal, impute_method):
     with open("output.txt", "w+") as file:
-	file.write("{}%\tWeights: {}\tRegularization: {}\n"
-            .format(scoreVal * 100, wvec[:-1], wvec[-1]))
-	for i in range(0, len(clusters)):
-	    file.write("Cluster {}: {}\n".format(i+1, cluster_terms[i]))
-	    for j in range(0, len(clusters[i])):
-		file.write("{}\t".format(clusters[i][j]))
-	    file.write("\n")
+        file.write("Imputation Technique: " + impute_method)
+    for i in range(0, len(clusters)):
+        file.write("Cluster {}: {}\n".format(i+1, cluster_terms[i]))
+        for j in range(0, len(clusters[i])):
+            file.write("{}\t".format(clusters[i][j]))
+            file.write("\n")
     end = time.time()
-	
+
+
+    
 if __name__ == '__main__':
     # Load data
     networks = load_networks(DSDs)
@@ -137,7 +171,9 @@ if __name__ == '__main__':
 
     # Resize, aggregate, cluster, score, and output
     adjs = resize_networks(networks, nodelists)
-    agg = aggregate(adjs, wvec)
+    # agg = aggregate(adjs, wvec)
+    impute_method = 'mean'
+    agg = aggregate_dsds(adjs, impute=impute_method)
     clusters = cluster(k, agg, gene_ids)
     scoreVal, cluster_terms = score(pval_cutoff, clusters)
-    to_file(clusters, cluster_terms, scoreVal, wvec)
+    to_file(clusters, cluster_terms, scoreVal, impute_method)
