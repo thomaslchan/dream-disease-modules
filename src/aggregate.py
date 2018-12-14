@@ -185,7 +185,7 @@ def score(pval_cutoff, clusters):
 #       file.write("\n")
 #     end = time.time()
 
-def to_file(clusters, cluster_terms, impute_method):
+def to_file(clusters, impute_method):
     with open("output.txt", "w+") as file:
         file.write("Imputation Technique: " + impute_method)
         for i in range(0, len(clusters)):
