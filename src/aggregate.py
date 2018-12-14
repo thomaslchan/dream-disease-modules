@@ -213,5 +213,7 @@ if __name__ == '__main__':
     impute_method = 'mean_local'
     agg = aggregate_dsds(adjs, impute=impute_method)
     clusters = cluster(k, agg, gene_ids)
+    with open(impute_method + '.pkl', 'wb'):
+        pickle.dump(clusters)
     #scoreVal, cluster_terms = score(pval_cutoff, clusters)
-    to_file(clusters, impute_method)
+    # to_file(clusters, impute_method)
