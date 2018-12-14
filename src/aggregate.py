@@ -64,7 +64,7 @@ def resize_networks(networks, nodelists):
 def aggregate_dsds(matrices, impute='mean'):
     impute_func = impute + '_impute'
     imputed_matrices = eval(impute_func)(matrices)
-    return np.mean(imputed_matrices)
+    return np.mean(imputed_matrices, axis=0)
 
 def mean_impute(matrices):
     vals = [np.mean(matrix) for matrix in matrices]
@@ -185,15 +185,14 @@ def score(pval_cutoff, clusters):
 #       file.write("\n")
 #     end = time.time()
 
-def to_file(clusters, cluster_terms, scoreVal, impute_method):
+def to_file(clusters, cluster_terms, impute_method):
     with open("output.txt", "w+") as file:
         file.write("Imputation Technique: " + impute_method)
-    for i in range(0, len(clusters)):
-        file.write("Cluster {}: {}\n".format(i+1, cluster_terms[i]))
-        for j in range(0, len(clusters[i])):
-            file.write("{}\t".format(clusters[i][j]))
-            file.write("\n")
-    end = time.time()
+        for i in range(0, len(clusters)):
+            file.write("Cluster {}: {}\n".format(i+1, cluster_terms[i]))
+            for j in range(0, len(clusters[i])):
+                file.write("{}\t".format(clusters[i][j]))
+                file.write("\n")
 
 
     
@@ -213,6 +212,6 @@ if __name__ == '__main__':
     # agg = aggregate(adjs, wvec)
     impute_method = 'mean_local'
     agg = aggregate_dsds(adjs, impute=impute_method)
-    # clusters = cluster(k, agg, gene_ids)
-    # scoreVal, cluster_terms = score(pval_cutoff, clusters)
-    # to_file(clusters, cluster_terms, scoreVal, impute_method)
+    clusters = cluster(k, agg, gene_ids)
+    #scoreVal, cluster_terms = score(pval_cutoff, clusters)
+    to_file(clusters, cluster_terms, impute_method)
