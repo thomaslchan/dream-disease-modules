@@ -2,7 +2,7 @@ import sys, os, operator, time, math, datetime
 import networkx as nx
 import numpy as np
 
-from funcassociate.client import _fc as fc
+# from funcassociate.client import _fc as fc
 from sklearn.cluster import KMeans
 
 DSDs = '../data/networks/DSDs'
@@ -50,7 +50,7 @@ def resize_networks(networks, nodelists):
     len_networks = len(networks)
     adjs = []
     for i in range(0, len_networks):
-        len_nodelist = len(nodelists[i])
+        len_nodelist = len(networks[i])
         adj = np.zeros((21115, 21115))
         for j in range(0, len_nodelist):
             for k in range(0, len_nodelist):
@@ -63,25 +63,64 @@ def resize_networks(networks, nodelists):
 
 def aggregate_dsds(matrices, impute='mean'):
     impute_func = impute + '_impute'
-    imputed_matrices = [eval(impute_func)(m) for m in matrices]
+    imputed_matrices = eval(impute_func)(matrices)
     return np.mean(imputed_matrices)
 
-def mean_impute(matrix):
-    return impute(matrix, np.mean(matrix))
+def mean_impute(matrices):
+    vals = [np.mean(matrix) for matrix in matrices]
+    return impute(matrices, vals)
 
-def min_impute(matrix):
-    return impute(matrix, np.min(matrix[np.nonzero(matrix)]))
+def min_impute(matrices):
+    vals = [np.min(matrix[np.nonzero(matrix)]) for matrix in matrices]
+    return impute(matrices, vals)
 
-def max_impute(matrix):
-    return impute(matrix, np.max(matrix))
+def max_impute(matrices):
+    vals = [np.max(matrix) for matrix in matrices]
+    return impute(matrices, vals)
 
-def median_impute(matrix):
-    return impute(matrix, np.median(matrix))
+def median_impute(matrices):
+    vals = [np.median(matrix) for matrix in matrices]
+    return impute(matrices, vals)
 
-def impute(matrix, imputed_value):
-    matrix[matrix == 0] = imputed_value
-    np.fill_diagonal(matrix, 0)
-    return matrix
+def preprocess(matrices):
+    rows, num_matrices = len(matrices[0]), len(matrices)
+    flat = np.array(matrices).reshape(rows**2, num_matrices)
+    flat[flat == 0] = np.nan
+    return flat
+
+def mean_local_impute(matrices, global_impute=mean_impute):
+    flat = preprocess(matrices)
+    mean = np.nanmean(flat, axis=1).reshape(rows, rows)
+    vals = global_impute([np.nan_to_num(mean)])
+    return local_impute(matrices, vals)
+
+def median_local_impute(matrices, global_impute=mean_impute):
+    flat = preprocess(matrices)
+    mean = np.nanmedian(flat, axis=1).reshape(rows, rows)
+    vals = global_impute([np.nan_to_num(mean)])
+    return local_impute(matrices, vals)
+
+def min_local_impute(matrices, global_impute=mean_impute):
+    flat = preprocess(matrices)
+    mean = np.nanmin(flat, axis=1).reshape(rows, rows)
+    vals = global_impute([np.nan_to_num(mean)])
+    return local_impute(matrices, vals)
+
+def max_local_impute(matrices, global_impute=mean_impute):
+    flat = preprocess(matrices)
+    mean = np.nanmax(flat, axis=1).reshape(rows, rows)
+    vals = global_impute([np.nan_to_num(mean)])
+    return local_impute(matrices, vals)
+
+def local_impute(matrices, vals):
+    return [np.copyto(matrix, vals, where=(matrix==0)) for matrix in matrices]
+
+
+def impute(matrices, imputed_values):
+    for matrix, val in zip(matrices, imputed_values):
+        matrix[matrix == 0] = val
+        np.fill_diagonal(matrix, 0)
+    return matrices
 
 # Takes a list of np matrices and a weight vector and sums all matrices together
 # scaled by the weights in the vector and added to a regularizer value.
@@ -172,8 +211,8 @@ if __name__ == '__main__':
     # Resize, aggregate, cluster, score, and output
     adjs = resize_networks(networks, nodelists)
     # agg = aggregate(adjs, wvec)
-    impute_method = 'mean'
+    impute_method = 'mean_local'
     agg = aggregate_dsds(adjs, impute=impute_method)
-    clusters = cluster(k, agg, gene_ids)
-    scoreVal, cluster_terms = score(pval_cutoff, clusters)
-    to_file(clusters, cluster_terms, scoreVal, impute_method)
+    # clusters = cluster(k, agg, gene_ids)
+    # scoreVal, cluster_terms = score(pval_cutoff, clusters)
+    # to_file(clusters, cluster_terms, scoreVal, impute_method)
