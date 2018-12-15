@@ -1,6 +1,7 @@
 import sys, os, operator, time, math, datetime
 import networkx as nx
 import numpy as np
+import pickle
 
 # from funcassociate.client import _fc as fc
 from sklearn.cluster import KMeans
@@ -210,7 +211,7 @@ if __name__ == '__main__':
     # Resize, aggregate, cluster, score, and output
     adjs = resize_networks(networks, nodelists)
     # agg = aggregate(adjs, wvec)
-    impute_method = 'mean_local'
+    impute_method = 'median_local'
     agg = aggregate_dsds(adjs, impute=impute_method)
     clusters = cluster(k, agg, gene_ids)
     with open(impute_method + '.pkl', 'wb') as f:
