@@ -87,35 +87,34 @@ def preprocess(matrices):
     rows, num_matrices = len(matrices[0]), len(matrices)
     flat = np.array(matrices).reshape(rows**2, num_matrices)
     flat[flat == 0] = np.nan
-    return flat
+    return flat, rows
 
 def mean_local_impute(matrices, global_impute=mean_impute):
-    flat = preprocess(matrices)
+    flat, rows = preprocess(matrices)
     mean = np.nanmean(flat, axis=1).reshape(rows, rows)
     vals = global_impute([np.nan_to_num(mean)])
     return local_impute(matrices, vals)
 
 def median_local_impute(matrices, global_impute=mean_impute):
-    flat = preprocess(matrices)
+    flat, rows = preprocess(matrices)
     mean = np.nanmedian(flat, axis=1).reshape(rows, rows)
     vals = global_impute([np.nan_to_num(mean)])
     return local_impute(matrices, vals)
 
 def min_local_impute(matrices, global_impute=mean_impute):
-    flat = preprocess(matrices)
+    flat, rows = preprocess(matrices)
     mean = np.nanmin(flat, axis=1).reshape(rows, rows)
     vals = global_impute([np.nan_to_num(mean)])
     return local_impute(matrices, vals)
 
 def max_local_impute(matrices, global_impute=mean_impute):
-    flat = preprocess(matrices)
+    flat, rows = preprocess(matrices)
     mean = np.nanmax(flat, axis=1).reshape(rows, rows)
     vals = global_impute([np.nan_to_num(mean)])
     return local_impute(matrices, vals)
 
 def local_impute(matrices, vals):
     return [np.copyto(matrix, vals, where=(matrix==0)) for matrix in matrices]
-
 
 def impute(matrices, imputed_values):
     for matrix, val in zip(matrices, imputed_values):
