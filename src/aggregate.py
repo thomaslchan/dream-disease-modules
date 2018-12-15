@@ -114,7 +114,8 @@ def max_local_impute(matrices, global_impute=mean_impute):
     return local_impute(matrices, vals)
 
 def local_impute(matrices, vals):
-    return [np.copyto(matrix, vals, where=(matrix==0)) for matrix in matrices]
+    [np.copyto(matrix, vals, where=(matrix==0)) for matrix in matrices]
+    return matrices
 
 def impute(matrices, imputed_values):
     for matrix, val in zip(matrices, imputed_values):
