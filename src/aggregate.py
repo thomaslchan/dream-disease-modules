@@ -9,10 +9,18 @@ from load_data import *
 
 NUM_GENES = 21115
 
-# Takes a list of np matrices and a list of nodes of the same length and resizes
-# the matrices to the same size, where each gene is the same index in all
-# matrices
+
 def resize_networks(networks, nodelists, total_nodes=NUM_GENES):
+    """
+    Resizes networks' distance matrices to fit in a total_nodes by 
+    total_nodes matrix. Returns a list of matrices as Numpy arrays.
+
+    Args:
+    -----------------------------------------------------------------
+    - networks: A list of distance matrices for the networks
+    - nodelists: A list of node-lists (which are integer lists)
+    - total_nodes: An integer for the total nodes (default=NUM_GENES)
+    """
     start = time.time()
     matrices = []
     for network, nodelist in zip(networks, nodelists):
@@ -26,7 +34,17 @@ def resize_networks(networks, nodelists, total_nodes=NUM_GENES):
     print("Resized networks in " + str(end - start) + " seconds")
     return matrices
 
+
 def aggregate_dsds(matrices, impute='mean'):
+    """
+    Aggregates distance matrices using some imputation method and returns
+    a single matrix as a Numpy array.
+
+    Args:
+    -----------------------------------------------------------------
+    - matrices: List of matrices as Numpy arrays
+    - impute: Keyword for an impute function in impute_methods
+    """
     impute_func = impute + '_impute'
     imputed_matrices = eval(impute_func)(matrices)
     return np.mean(imputed_matrices, axis=0)
@@ -34,22 +52,28 @@ def aggregate_dsds(matrices, impute='mean'):
 
 # Takes a list of np matrices and a weight vector and sums all matrices together
 # scaled by the weights in the vector and added to a regularizer value.
-def aggregate(adjs, wvec):
-    start = time.time()
-    agg = np.full_like(adjs[0], (wvec[-1]))
-    for i in range(0, len(adjs)):
-        agg = np.add(agg, np.multiply(adjs[i], (wvec[i])))
-    end = time.time()
-    print("Aggregated networks in " +
-        str(datetime.timedelta(seconds=int(end-start))))
-    return agg
+# def aggregate(adjs, wvec):
+#     start = time.time()
+#     agg = np.full_like(adjs[0], (wvec[-1]))
+#     for i in range(0, len(adjs)):
+#         agg = np.add(agg, np.multiply(adjs[i], (wvec[i])))
+#     end = time.time()
+#     print("Aggregated networks in " +
+#         str(datetime.timedelta(seconds=int(end-start))))
+#     return agg
 
-def rbf(distance_matrix, delta=1):
-    return np.exp(- distance_matrix ** 2 / (2. * delta ** 2))
 
-# Takes a k value, an aggregated matrix, and a dictionary of gene ids. Uses
-# k-means clustering on the aggregated matrix to produce clusters of genes
 def cluster(k, agg_matrix, gene_ids):
+    """
+    Clusters an aggregated distance matrix with K-Means clustering and returns
+    the clusters as lists of HGNC gene symbols.
+
+    Args:
+    -----------------------------------------------------------------
+    - k: Number of clusters, integer
+    - agg_matrix: Distance matrix, Numpy array
+    - gene_ids: List of gene IDs
+    """
     k_means = KMeans(n_clusters=k)
 
 
@@ -120,16 +144,25 @@ if __name__ == '__main__':
     args = parser.parse_args()
    
     networks = load_DSDs(DSDs)
-    nodelists = read_nodelists(NODELISTS)
+    # nodelists = read_nodelists(NODELISTS)
+    nodelists = get_nodelists(read_graphs())
+    with open ('nodes.pkl', 'wb') as f:
+        pickle.dump(nodelists, f)
+    print(nodelists[0])
+
     gene_ids = gene_id_dict(GENEFILE)
 
     # Resize, aggregate, cluster, score, and output
     matrices = resize_networks(networks, nodelists)
+    print("Resized networks")
+    # print(matrices)
     impute_method = args.impute
     agg = aggregate_dsds(matrices, impute=impute_method)
+    print("Aggregated matrices")
     clusters = cluster(args.n_clusters, agg, gene_ids)
+    print("Finished clustering")
     with open(impute_method + '.pkl', 'wb') as f:
         pickle.dump(clusters, f)
-    score_val, cluster_terms = score(clusters)
-    print(score_val)
+    # score_val, cluster_terms = score(clusters)
+    # print(score_val)
     # to_file(clusters, impute_method)

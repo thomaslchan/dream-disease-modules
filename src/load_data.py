@@ -1,10 +1,53 @@
 import time, os
 import numpy as np
+import networkx as nx
 
-
+GRAPHS = '../data/networks/anonymized'
 DSDs = '../data/networks/DSDs'
 NODELISTS = '../data/nodelists'
 GENEFILE = '../data/ids/gene_ids.txt'
+
+
+def read_graphs(path=GRAPHS):
+    """
+    Reads in graphs from .txt files that have weighted edges in 
+    [node] [node] [weight] format, and returns a list of Networkx graphs.
+
+    Args:
+    -----------------------------------------------------------------
+    - path: Directory with .txt files of graphs (default=GRAPHS)
+    """
+    graphs = []
+    i = 0
+    for filename in sorted(os.listdir(path)):
+        print(filename)
+        start = time.time()
+        i += 1
+        g_type = nx.OrderedDiGraph if i == 3 else nx.OrderedGraph
+        G = nx.read_weighted_edgelist(os.path.join(path, filename),
+                                    create_using=g_type)
+        graphs.append(G)
+        end = time.time()
+        print("Reading in network " + str(i) + " took " 
+                + str(int(end-start)) + " seconds.\n\n")
+    return graphs
+
+
+def get_nodelists(graphs):
+    """
+    Get node-lists from graphs in sorted order and return a list of 
+    list of integers.
+
+    Args:
+    -----------------------------------------------------------------
+    - graphs: List of Networkx graphs
+    """
+    sgs = [max(nx.connected_component_subgraphs(G), key=len) 
+                if not nx.is_directed(G)
+                else max(nx.weakly_connected_component_subgraphs(G), key=len)
+                    for G in graphs]
+    nodelists = [sorted(map(int, sg.nodes)) for sg in sgs]
+    return nodelists
 
 
 def load_DSDs(path=DSDs):
