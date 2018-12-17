@@ -1,47 +1,16 @@
-import sys, os, operator, time, math, datetime
+import sys, os, operator, time, math, datetime, pickle
+
 import networkx as nx
 import numpy as np
-import pickle
-
 # from funcassociate.client import _fc as fc
 from sklearn.cluster import KMeans
 
-DSDs = '../data/networks/DSDs'
-NODELISTS = '../data/nodelists'
-GENEFILE = '../data/ids/gene_ids.txt'
+from impute_methods import *
+from load_data import *
 
-# Takes a path and loads all npy files in that directory into np matrices
-def load_networks(path):
-    start = time.time()
-    adjs = []
-    for filename in sorted(os.listdir(path)):
-        adj = np.load(os.path.join(path, filename))
-        adjs.append(adj)
-    end = time.time()
-    print("Loaded networks in " +
-        str(datetime.timedelta(seconds=int(end-start))))
-    return adjs
+NUM_GENES = 21115
 
-# Takes a path and reads all nodelists files in that directory into lists
-def read_nodelists(path):
-    nodelists = []
-    for filename in sorted(os.listdir(path)):
-        with open(os.path.join(path, filename), "r") as file:
-            nodelist = []
-            for line in file.readlines():
-                nodelist.append(int(line.strip()))
-            nodelists.append(nodelist)
-    return nodelists
 
-# Takes a filename that corresponds to a list of key value pairs and creates a
-# dictionary of gene ids 
-def gene_id_dict(filename):
-    gene_ids = {}
-    with open(filename, "r") as file:
-        for line in file.readlines():
-            d = line.strip().split("\t")
-            gene_ids[int(d[1])] = d[0]
-    return gene_ids
 
 # Takes a list of np matrices and a list of nodes of the same length and resizes
 # the matrices to the same size, where each gene is the same index in all
@@ -67,62 +36,6 @@ def aggregate_dsds(matrices, impute='mean'):
     imputed_matrices = eval(impute_func)(matrices)
     return np.mean(imputed_matrices, axis=0)
 
-def mean_impute(matrices):
-    vals = [np.mean(matrix) for matrix in matrices]
-    return impute(matrices, vals)
-
-def min_impute(matrices):
-    vals = [np.min(matrix[np.nonzero(matrix)]) for matrix in matrices]
-    return impute(matrices, vals)
-
-def max_impute(matrices):
-    vals = [np.max(matrix) for matrix in matrices]
-    return impute(matrices, vals)
-
-def median_impute(matrices):
-    vals = [np.median(matrix) for matrix in matrices]
-    return impute(matrices, vals)
-
-def preprocess(matrices):
-    rows, num_matrices = len(matrices[0]), len(matrices)
-    flat = np.array(matrices).reshape(rows**2, num_matrices)
-    flat[flat == 0] = np.nan
-    return flat, rows
-
-def mean_local_impute(matrices, global_impute=mean_impute):
-    flat, rows = preprocess(matrices)
-    mean = np.nanmean(flat, axis=1).reshape(rows, rows)
-    vals = global_impute([np.nan_to_num(mean)])
-    return local_impute(matrices, vals)
-
-def median_local_impute(matrices, global_impute=mean_impute):
-    flat, rows = preprocess(matrices)
-    mean = np.nanmedian(flat, axis=1).reshape(rows, rows)
-    vals = global_impute([np.nan_to_num(mean)])
-    return local_impute(matrices, vals)
-
-def min_local_impute(matrices, global_impute=mean_impute):
-    flat, rows = preprocess(matrices)
-    mean = np.nanmin(flat, axis=1).reshape(rows, rows)
-    vals = global_impute([np.nan_to_num(mean)])
-    return local_impute(matrices, vals)
-
-def max_local_impute(matrices, global_impute=mean_impute):
-    flat, rows = preprocess(matrices)
-    mean = np.nanmax(flat, axis=1).reshape(rows, rows)
-    vals = global_impute([np.nan_to_num(mean)])
-    return local_impute(matrices, vals)
-
-def local_impute(matrices, vals):
-    [np.copyto(matrix, vals, where=(matrix==0)) for matrix in matrices]
-    [np.fill_diagonal(matrix, 0) for matrix in matrices]
-    return matrices
-
-def impute(matrices, imputed_values):
-    for matrix, val in zip(matrices, imputed_values):
-        matrix[matrix == 0] = val
-        np.fill_diagonal(matrix, 0)
-    return matrices
 
 # Takes a list of np matrices and a weight vector and sums all matrices together
 # scaled by the weights in the vector and added to a regularizer value.
@@ -142,7 +55,7 @@ def cluster(k, agg, gene_ids):
     start = time.time()
     clustering = KMeans(n_clusters=k)
     labels = clustering.fit(agg).labels_
-    clusters = d = [[] for x in xrange(k)]
+    clusters = d = [[] for x in range(k)]
     for i in range(0, labels.size):
            clusters[labels[i]].append(gene_ids[i])
     end = time.time()
@@ -200,21 +113,28 @@ def to_file(clusters, impute_method):
     
 if __name__ == '__main__':
     # Load data
+    parser = argparse.ArgumentParser(description='Multigraph Clustering \
+                                                of Genes and Proteins')
+    parser.add_argument('--impute', type=str, default='mean_local',
+                        help="Imputation method")
+    parser.add_argument('--n_clusters', type=int, default=250,
+                        help="Number of clusters")
+    args = parser.parse_args()
+    
     networks = load_networks(DSDs)
     nodelists = read_nodelists(NODELISTS)
     gene_ids = gene_id_dict(GENEFILE)
 
     # Parameters
-    wvec = [.2, .2, .1, .1, .3, .1, 1.5]
-    k = 200
+    # wvec = [.2, .2, .1, .1, .3, .1, 1.5]
     pval_cutoff = .05
 
     # Resize, aggregate, cluster, score, and output
     adjs = resize_networks(networks, nodelists)
     # agg = aggregate(adjs, wvec)
-    impute_method = 'median_local'
+    impute_method = args.impute
     agg = aggregate_dsds(adjs, impute=impute_method)
-    clusters = cluster(k, agg, gene_ids)
+    clusters = cluster(args.n_clusters, agg, gene_ids)
     with open(impute_method + '.pkl', 'wb') as f:
         pickle.dump(clusters, f)
     #scoreVal, cluster_terms = score(pval_cutoff, clusters)
