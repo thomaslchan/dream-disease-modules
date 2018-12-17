@@ -100,7 +100,7 @@ def preprocess(matrices):
     - matrices: List of distance matrices as Numpy arrays
     """
     rows, num_matrices = len(matrices[0]), len(matrices)
-    flat = np.array(matrices).reshape(rows**2, num_matrices)
+    flat = np.vstack(np.dstack(tuple(matrices)))
     flat[flat == 0] = np.nan
     return flat, rows
 
