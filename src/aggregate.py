@@ -17,18 +17,17 @@ NUM_GENES = 21115
 # matrices
 def resize_networks(networks, nodelists):
     start = time.time()
-    len_networks = len(networks)
-    adjs = []
-    for i in range(0, len_networks):
-        len_nodelist = len(networks[i])
-        adj = np.zeros((21115, 21115))
-        for j in range(0, len_nodelist):
-            for k in range(0, len_nodelist):
-                adj[j][k] = networks[i][j][k]
-        adjs.append(adj)
+    matrices = []
+    for network, nodelist in zip(networks, nodelists):
+        num_nodes = len(nodelist)
+        matrix = np.zeros((NUM_GENES, NUM_GENES))
+        for j in range(0, num_nodes):
+            for k in range(0, num_nodes):
+                matrix[nodelist[j]][nodelist[k]] = network[j][k]
+        matrices.append(matrix)
     end = time.time()
-    print("Resized networks in " +
-        str(datetime.timedelta(seconds=int(end-start))))
+    print("Resized networks in " + str(end - start) + " seconds")
+    return matrices
     return adjs
 
 def aggregate_dsds(matrices, impute='mean'):
@@ -51,16 +50,15 @@ def aggregate(adjs, wvec):
 
 # Takes a k value, an aggregated matrix, and a dictionary of gene ids. Uses
 # k-means clustering on the aggregated matrix to produce clusters of genes
-def cluster(k, agg, gene_ids):
+def cluster(k, agg_matrix, gene_ids):
     start = time.time()
-    clustering = KMeans(n_clusters=k)
-    labels = clustering.fit(agg).labels_
-    clusters = d = [[] for x in range(k)]
-    for i in range(0, labels.size):
-           clusters[labels[i]].append(gene_ids[i])
+    k_means = KMeans(n_clusters=k)
+    labels = k_means.fit(agg_matrix).labels_
+    clusters = [[] for x in range(k)]
+    [clusters[label].append(gene_id) for label, gene_id
+                                     in zip(labels, gene_ids)]
     end = time.time()
-    print("Clustered aggregated network in " +
-        str(datetime.timedelta(seconds=int(end-start))))
+    print("Clustered aggregated network in " + str(end - start) + " seconds")
     return clusters
 
 # Takes a p value and a set of clusters and scores each cluster using Func
@@ -70,21 +68,24 @@ def score(pval_cutoff, clusters):
     start = time.time()
     score = 0
     cluster_terms = []
-    func = fc()
     for i in range(0, len(clusters)):
         try:
-            ret = func.functionate(query=clusters[i], species="Homo sapiens",
+            ret = fc.functionate(query=clusters[i], species="Homo sapiens",
             namespace="hgnc_symbol", cutoff=(1-pval_cutoff))["over"]
-            p = ret[0][4]*(ret[0][1])
+
+            # Result pval is the product of the the log (base 10) of the odds
+            # ratio and the number of genes in the query that have the attribute
+            pval = ret[0][4] * (ret[0][1])
+
+            # Cluster terms is appending the attribute ID
             cluster_terms.append(ret[0][7])
         except:
-            p = 1
+            pval = 1
             cluster_terms.append("")
-    if (p < pval_cutoff):
+    if (pval < pval_cutoff):
         score += 1
     end = time.time()
-    print("Scored clusters in " +
-        str(datetime.timedelta(seconds=int(end-start))))
+    print("Scored clusters in " + str(end - start) + " seconds")
     return score/float(len(clusters)), cluster_terms
 
 # Takes a set of clusters, their GO terms, a score, and the weight vector used
