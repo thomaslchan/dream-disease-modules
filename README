@@ -1,22 +1,23 @@
-Christian Zinck
-Edwin Jain
-Thomas Chan
-
-Applying Learning Techniques to the DREAM Challenge.
+Applying Imputation Techniques to the DREAM Challenge.
 
 Commands:
-python aggregate.py - finds the scored aggregated clustering of a collection of
-np matrices located in data/networks/DSDs, using node lists in data/nodelists,
-and gene_ids in data/ids
+python aggregate.py
+	Finds the scored aggregated clustering of a collection of np matrices
+	located in data/networks/DSDs, using node lists in data/nodelists and
+	gene_ids in data/ids. Takes imputation method and number of clusters as
+	optional commandline arguments with flags "--impute" and "--n_clusters",
+	respectively.
 
-python dsd.py - computes the DSD matrices and nodelists of a collection of
-edgelists located in data/networks/anonymized
 
-python convert.py - converts a directed graph to an undirected graph given a 
-filename as a command line parameter
+python dsd.py
+	Computes the DSD matrices and nodelists of a collection of edgelists
+	located in data/networks/anonymized
 
-*Note*
-FuncAssociate cannot be pip installed and therefore must be installed manually.
-Technically, only we have been licensed to use the software, since we had to
-request it from the creators, so I would recommend doing the same before using
-it.
+python convert.py
+	Converts a directed graph to an undirected graph given a filename as a 
+	command line parameter
+
+Note:
+	FuncAssociate cannot be pip installed and therefore must be installed
+	manually. This is licensed software, so it is recommended that you request
+	access to the code before using it.

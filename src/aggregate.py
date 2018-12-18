@@ -167,6 +167,7 @@ if __name__ == '__main__':
         pickle.dump(clusters, f)
 
     score_val, cluster_terms = score(clusters)
+    print("Score: " + str(score_val) + "\n")
     to_file(clusters, impute_method)
 
     #CONVERT
