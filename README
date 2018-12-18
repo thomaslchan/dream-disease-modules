@@ -19,5 +19,9 @@ python convert.py
 
 Note:
 	FuncAssociate cannot be pip installed and therefore must be installed
-	manually. This is licensed software, so it is recommended that you request
-	access to the code before using it.
+	manually. This is licensed software from the Roth Lab at University of
+	Toronto. It is recommended that you request access to the code before
+	using this program.
+
+	The dsd.py and convert.py were sourced from Tufts University's Diffusion
+	State Difference program.
