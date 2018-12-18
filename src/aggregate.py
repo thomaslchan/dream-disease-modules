@@ -1,8 +1,7 @@
-import sys, os, operator, time, math, datetime, pickle, argparse
+import sys, os, operator, time, math, datetime, pickle, argparse, json
 import networkx as nx
 import numpy as np
-# from funcassociate.client import _fc as fc
-from sklearn.cluster import KMeans, SpectralClustering
+from sklearn.cluster import KMeans
 
 from impute_methods import *
 from load_data import *
@@ -66,47 +65,12 @@ def cluster(k, agg_matrix, gene_ids):
     start = time.time()
     km_labels = k_means.fit(agg_matrix).labels_
     km_clusters = [[] for x in range(k)]
-    [km_clusters[label].append(gene_id) for label, gene_id
+    [km_clusters[label].append(gene_ids[gene_id]) for label, gene_id
                                      in zip(km_labels, gene_ids)]
     end = time.time()
     print("Clustered aggregated network in " + str(end - start) + " seconds")
 
-    # print("Clustered aggregated network in " + str(end - start) + " seconds")
     return km_clusters
-
-def score(clusters, pval_cutoff=0.05):
-    """
-    Calculates score for clustering of genes by statistical significance of
-    given p value cutoff using FuncAssociate and returns percentage of enriched
-    clusters and GO terms for each cluster
-
-    Args:
-    -----------------------------------------------------------------
-    - clusters: List of clusters
-    - pval_cutoff: Integer for p value cutoff
-    """
-    start = time.time()
-    score = 0
-    cluster_terms = []
-    for i in range(0, len(clusters)):
-        try:
-            ret = fc.functionate(query=clusters[i], species="Homo sapiens",
-            namespace="hgnc_symbol", cutoff=(1-pval_cutoff))["over"]
-
-            # Result pval is the product of the the log (base 10) of the odds
-            # ratio and the number of genes in the query that have the attribute
-            pval = ret[0][4] * (ret[0][1])
-
-            # Cluster terms is appending the attribute ID
-            cluster_terms.append(ret[0][7])
-        except:
-            pval = 1
-            cluster_terms.append("")
-    if (pval < pval_cutoff):
-        score += 1
-    end = time.time()
-    print("Scored clusters in " + str(end - start) + " seconds")
-    return score/float(len(clusters)), cluster_terms
 
 def to_file(clusters, impute_method):
     """
@@ -125,13 +89,31 @@ def to_file(clusters, impute_method):
                 file.write("{}\t".format(clusters[i][j]))
                 file.write("\n")
 
-# def test_small():
-#     size_list = [400, 480, 430]
-#     num_nodes = 500
-#     networks = [np.random.randint(2, 16, (s, s)).astype(float) for s in size_list]
-#     [np.fill_diagonal(n, 0) for n in networks]
+def convert_to_py2_pickle(path):
+    """
+    Converts pickle of python3 protocol to a pickle of python2 protocol.
 
-#     nodelists = [list(np.random.choice(range(num_nodes), s, replace=False)) for s in size_list]
+    Args:
+    -----------------------------------------------------------------
+    - path: The path of the folder containing python3 pickle files
+    """
+    start = time.time()
+    for filename in sorted(os.listdir(path)):
+        print(filename)
+        start = time.time()
+        p3_pickle = pickle.load(open(os.path.join(path, filename), 'rb'))
+        pickle.dump(p3_pickle, open(filename, 'wb'), protocol=2)
+    end = time.time()
+      
+    print("Converted pickles in " + str(int(end-start)) + " seconds.\n\n")
+
+def test_small():
+    size_list = [400, 480, 430]
+    num_nodes = 500
+    networks = [np.random.randint(2, 16, (s, s)).astype(float) for s in size_list]
+    [np.fill_diagonal(n, 0) for n in networks]
+
+    nodelists = [list(np.random.choice(range(num_nodes), s, replace=False)) for s in size_list]
 
     
 if __name__ == '__main__':
@@ -144,16 +126,16 @@ if __name__ == '__main__':
                         help="Number of clusters")
     args = parser.parse_args()
    
-    # nodelists = get_nodelists(read_graphs())
-    # with open ('nodes.pkl', 'wb') as f:
-    #     pickle.dump(nodelists, f)
-    # print(nodelists[0])
+    nodelists = get_nodelists(read_graphs())
+    with open ('nodes.pkl', 'wb') as f:
+        pickle.dump(nodelists, f)
+    print(nodelists[0])
 
     networks = load_DSDs(DSDs)
     nodelists = read_nodelists(NODELISTS)
     gene_ids = gene_id_dict(GENEFILE)
 
-    # Resize, aggregate, cluster, score, and output
+    Resize, aggregate, cluster, score, and output
     matrices = resize_networks(networks, nodelists)
     print("Resized networks")
 
@@ -166,57 +148,15 @@ if __name__ == '__main__':
     with open(impute_method + '.pkl', 'wb') as f:
         pickle.dump(clusters, f)
 
-    score_val, cluster_terms = score(clusters)
-    print("Score: " + str(score_val) + "\n")
-    to_file(clusters, impute_method)
-
-    #CONVERT
-    # max = pickle.load(open('../results/max.pkl', 'rb'))
-    # pickle.dump(max, open('MAX.pkl', 'wb'), protocol=2)
-
-    # max_local = pickle.load(open('../results/max_local.pkl', 'rb'))
-    # pickle.dump(max_local, open('MAX_LOCAL.pkl', 'wb'), protocol=2)
-
-    # mean = pickle.load(open('../results/mean.pkl', 'rb'))
-    # pickle.dump(mean, open('MEAN.pkl', 'wb'), protocol=2)
-
-    # mean_local = pickle.load(open('../results/mean_local.pkl', 'rb'))
-    # pickle.dump(mean_local, open('MEAN_LOCAL.pkl', 'wb'), protocol=2)
-
-    # min = pickle.load(open('../results/min.pkl', 'rb'))
-    # pickle.dump(min, open('MIN.pkl', 'wb'), protocol=2)
-
-    # min_local = pickle.load(open('../results/min_local.pkl', 'rb'))
-    # pickle.dump(min_local, open('MIN_LOCAL.pkl', 'wb'), protocol=2)
-
-    # zero = pickle.load(open('../results/zero.pkl', 'rb'))
-    # pickle.dump(zero, open('ZERO.pkl', 'wb'), protocol=2)
-
-    #LOAD
-    # max = pickle.load(open('MAX.pkl', 'rb'))
-    # max_score, cluster_terms = score(max)
-    # print('MAX: ' + str(max_score))
-
-    # max_local = pickle.load(open('MAX_LOCAL.pkl', 'rb'))
-    # max_local_score, cluster_terms = score(max_local)
-    # print('MAX_LOCAL: ' + str(max_local_score))
-
-    # mean = pickle.load(open('MEAN.pkl', 'rb'))
-    # mean_score, cluster_terms = score(mean)
-    # print('MEAN: ' + str(mean_score))
-
-    # mean_local = pickle.load(open('MEAN_LOCAL.pkl', 'rb'))
-    # mean_local_score, cluster_terms = score(mean_local)
-    # print('MEAN_LOCAL: ' + str(mean_local_score))
-
-    # min = pickle.load(open('MIN.pkl', 'rb'))
-    # min_score, cluster_terms = score(min)
-    # print('MIN: ' + str(min_score))
-
-    # min_local = pickle.load(open('MIN_LOCAL.pkl', 'rb'))
-    # min_score, cluster_terms = score(min_local)
-    # print('MIN_LOCAL: ' + str(min_score))
-
-    # zero = pickle.load(open('ZERO.pkl', 'rb'))
-    # zero_score, cluster_terms = score(zero)
-    # print('MIN_LOCAL: ' + str(zero_score))
+    # for filename in sorted(os.listdir('../results')):
+    #         print(filename)
+    #         start = time.time()
+    #         converted_clusters = []
+    #         clusters = pickle.load(open(os.path.join('../results', filename), 'rb'))
+    #         for i in range(len(clusters)):
+    #             cluster = clusters[i]
+    #             for j in range(len(cluster)):
+    #                 cluster[j] = gene_ids[j]
+    #             converted_clusters.append(cluster)
+    #         print(converted_clusters)
+    #         pickle.dump(converted_clusters, open(filename, 'wb'), protocol=2)

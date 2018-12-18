@@ -13,15 +13,11 @@ python dsd.py
 	Computes the DSD matrices and nodelists of a collection of edgelists
 	located in data/networks/anonymized
 
-python convert.py
-	Converts a directed graph to an undirected graph given a filename as a 
-	command line parameter
-
 Note:
 	FuncAssociate cannot be pip installed and therefore must be installed
 	manually. This is licensed software from the Roth Lab at University of
 	Toronto. It is recommended that you request access to the code before
 	using this program.
 
-	The dsd.py and convert.py were sourced from Tufts University's Diffusion
-	State Difference program.
+	The dsd.py were sourced from Tufts University's Diffusion State Difference
+	program.
