@@ -5,6 +5,7 @@ import networkx as nx
 GRAPHS = '../data/networks/anonymized'
 DSDs = '../data/networks/DSDs'
 NODELISTS = '../data/nodelists'
+NODES = 'nodes.pkl'
 GENEFILE = '../data/ids/gene_ids.txt'
 
 
@@ -86,6 +87,19 @@ def read_nodelists(path=NODELISTS):
             for line in file.readlines():
                 nodelist.append(int(line.strip()))
             nodelists.append(nodelist)
+    return nodelists
+
+
+def load_nodelists(path=NODES):
+    """
+    Loads in nodelists from a pickle file, and returns a list of lists.
+    
+    Args:
+    -------------------------------------------------------------
+    - path: Path to .pkl file with nodelists
+    """
+    with open(path, 'rb') as f:
+        nodelists = pickle.load(f)
     return nodelists
 
 

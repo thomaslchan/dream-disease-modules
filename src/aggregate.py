@@ -7,6 +7,7 @@ from sklearn.cluster import KMeans, SpectralClustering
 from impute_methods import *
 from load_data import *
 
+
 NUM_GENES = 21115
 
 
@@ -127,42 +128,49 @@ def to_file(clusters, impute_method):
 def test_small():
     size_list = [400, 480, 430]
     num_nodes = 500
+    gene_ids = gene_id_dict(GENEFILE)
     networks = [np.random.randint(2, 16, (s, s)).astype(float) for s in size_list]
     [np.fill_diagonal(n, 0) for n in networks]
-
     nodelists = [list(np.random.choice(range(num_nodes), s, replace=False)) for s in size_list]
+    dsds = resize_networks(networks, nodelists, total_nodes=num_nodes)
+    agg = aggregate_dsds(dsds)
+    clusters = cluster(20, agg, gene_ids)
+    print(clusters)
+    with open('example.pkl', 'wb') as f:
+        pickle.dump(clusters, f)
 
     
 if __name__ == '__main__':
     # Load data
-    parser = argparse.ArgumentParser(description='Multigraph Clustering \
-                                                of Genes and Proteins')
-    parser.add_argument('--impute', type=str, default='mean_local',
-                        help="Imputation method")
-    parser.add_argument('--n_clusters', type=int, default=250,
-                        help="Number of clusters")
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser(description='Multigraph Clustering \
+    #                                             of Genes and Proteins')
+    # parser.add_argument('--impute', type=str, default='mean_local',
+    #                     help="Imputation method")
+    # parser.add_argument('--n_clusters', type=int, default=250,
+    #                     help="Number of clusters")
+    # args = parser.parse_args()
    
-    networks = load_DSDs(DSDs)
-    # nodelists = read_nodelists(NODELISTS)
-    nodelists = get_nodelists(read_graphs())
-    with open ('nodes.pkl', 'wb') as f:
-        pickle.dump(nodelists, f)
-    print(nodelists[0])
+    # networks = load_DSDs(DSDs)
+    # # nodelists = read_nodelists(NODELISTS)
+    # nodelists = get_nodelists(read_graphs())
+    # with open ('nodes.pkl', 'wb') as f:
+    #     pickle.dump(nodelists, f)
+    # print(nodelists[0])
 
-    gene_ids = gene_id_dict(GENEFILE)
+    # gene_ids = gene_id_dict(GENEFILE)
 
-    # Resize, aggregate, cluster, score, and output
-    matrices = resize_networks(networks, nodelists)
-    print("Resized networks")
-    # print(matrices)
-    impute_method = args.impute
-    agg = aggregate_dsds(matrices, impute=impute_method)
-    print("Aggregated matrices")
-    clusters = cluster(args.n_clusters, agg, gene_ids)
-    print("Finished clustering")
-    with open(impute_method + '.pkl', 'wb') as f:
-        pickle.dump(clusters, f)
+    # # Resize, aggregate, cluster, score, and output
+    # matrices = resize_networks(networks, nodelists)
+    # print("Resized networks")
+    # # print(matrices)
+    # impute_method = args.impute
+    # agg = aggregate_dsds(matrices, impute=impute_method)
+    # print("Aggregated matrices")
+    # clusters = cluster(args.n_clusters, agg, gene_ids)
+    # print("Finished clustering")
+    # with open(impute_method + '.pkl', 'wb') as f:
+    #     pickle.dump(clusters, f)
     # score_val, cluster_terms = score(clusters)
     # print(score_val)
     # to_file(clusters, impute_method)
+    test_small()
