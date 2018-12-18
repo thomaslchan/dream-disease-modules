@@ -7,7 +7,6 @@ from sklearn.cluster import KMeans, SpectralClustering
 from impute_methods import *
 from load_data import *
 
-
 NUM_GENES = 21115
 
 
@@ -50,20 +49,6 @@ def aggregate_dsds(matrices, impute='mean'):
     imputed_matrices = eval(impute_func)(matrices)
     return np.mean(imputed_matrices, axis=0)
 
-
-# Takes a list of np matrices and a weight vector and sums all matrices together
-# scaled by the weights in the vector and added to a regularizer value.
-# def aggregate(adjs, wvec):
-#     start = time.time()
-#     agg = np.full_like(adjs[0], (wvec[-1]))
-#     for i in range(0, len(adjs)):
-#         agg = np.add(agg, np.multiply(adjs[i], (wvec[i])))
-#     end = time.time()
-#     print("Aggregated networks in " +
-#         str(datetime.timedelta(seconds=int(end-start))))
-#     return agg
-
-
 def cluster(k, agg_matrix, gene_ids):
     """
     Clusters an aggregated distance matrix with K-Means clustering and returns
@@ -89,10 +74,17 @@ def cluster(k, agg_matrix, gene_ids):
     # print("Clustered aggregated network in " + str(end - start) + " seconds")
     return km_clusters
 
-# Takes a p value and a set of clusters and scores each cluster using Func
-# Associate. Return the percentage of clusters that are found to be enriched, as
-# well as the best GO term of those enriched clusters
 def score(clusters, pval_cutoff=0.05):
+    """
+    Calculates score for clustering of genes by statistical significance of
+    given p value cutoff using FuncAssociate and returns percentage of enriched
+    clusters and GO terms for each cluster
+
+    Args:
+    -----------------------------------------------------------------
+    - clusters: List of clusters
+    - pval_cutoff: Integer for p value cutoff
+    """
     start = time.time()
     score = 0
     cluster_terms = []
@@ -117,60 +109,114 @@ def score(clusters, pval_cutoff=0.05):
     return score/float(len(clusters)), cluster_terms
 
 def to_file(clusters, impute_method):
+    """
+    Writes impute method and clusters with corresponding GO terms to a file
+
+    Args:
+    -----------------------------------------------------------------
+    - clusters: List of clusters
+    - impute_method: String of impute method used to generate clusters
+    """
     with open("output.txt", "w+") as file:
-        file.write("Imputation Technique: " + impute_method)
+        file.write("Imputation Technique: " + impute_method + "\n")
         for i in range(0, len(clusters)):
             file.write("Cluster {}:\n".format(i+1))
             for j in range(0, len(clusters[i])):
                 file.write("{}\t".format(clusters[i][j]))
                 file.write("\n")
 
-def test_small():
-    size_list = [400, 480, 430]
-    num_nodes = 500
-    gene_ids = gene_id_dict(GENEFILE)
-    networks = [np.random.randint(2, 16, (s, s)).astype(float) for s in size_list]
-    [np.fill_diagonal(n, 0) for n in networks]
-    nodelists = [list(np.random.choice(range(num_nodes), s, replace=False)) for s in size_list]
-    dsds = resize_networks(networks, nodelists, total_nodes=num_nodes)
-    agg = aggregate_dsds(dsds)
-    clusters = cluster(20, agg, gene_ids)
-    print(clusters)
-    with open('example.pkl', 'wb') as f:
-        pickle.dump(clusters, f)
+# def test_small():
+#     size_list = [400, 480, 430]
+#     num_nodes = 500
+#     networks = [np.random.randint(2, 16, (s, s)).astype(float) for s in size_list]
+#     [np.fill_diagonal(n, 0) for n in networks]
+
+#     nodelists = [list(np.random.choice(range(num_nodes), s, replace=False)) for s in size_list]
 
     
 if __name__ == '__main__':
     # Load data
-    # parser = argparse.ArgumentParser(description='Multigraph Clustering \
-    #                                             of Genes and Proteins')
-    # parser.add_argument('--impute', type=str, default='mean_local',
-    #                     help="Imputation method")
-    # parser.add_argument('--n_clusters', type=int, default=250,
-    #                     help="Number of clusters")
-    # args = parser.parse_args()
+    parser = argparse.ArgumentParser(description='Multigraph Clustering \
+                                                of Genes and Proteins')
+    parser.add_argument('--impute', type=str, default='mean_local',
+                        help="Imputation method")
+    parser.add_argument('--n_clusters', type=int, default=250,
+                        help="Number of clusters")
+    args = parser.parse_args()
    
-    # networks = load_DSDs(DSDs)
-    # # nodelists = read_nodelists(NODELISTS)
     # nodelists = get_nodelists(read_graphs())
     # with open ('nodes.pkl', 'wb') as f:
     #     pickle.dump(nodelists, f)
     # print(nodelists[0])
 
-    # gene_ids = gene_id_dict(GENEFILE)
+    networks = load_DSDs(DSDs)
+    nodelists = read_nodelists(NODELISTS)
+    gene_ids = gene_id_dict(GENEFILE)
 
-    # # Resize, aggregate, cluster, score, and output
-    # matrices = resize_networks(networks, nodelists)
-    # print("Resized networks")
-    # # print(matrices)
-    # impute_method = args.impute
-    # agg = aggregate_dsds(matrices, impute=impute_method)
-    # print("Aggregated matrices")
-    # clusters = cluster(args.n_clusters, agg, gene_ids)
-    # print("Finished clustering")
-    # with open(impute_method + '.pkl', 'wb') as f:
-    #     pickle.dump(clusters, f)
-    # score_val, cluster_terms = score(clusters)
-    # print(score_val)
-    # to_file(clusters, impute_method)
-    test_small()
+    # Resize, aggregate, cluster, score, and output
+    matrices = resize_networks(networks, nodelists)
+    print("Resized networks")
+
+    impute_method = args.impute
+    agg = aggregate_dsds(matrices, impute=impute_method)
+    print("Aggregated matrices")
+    
+    clusters = cluster(args.n_clusters, agg, gene_ids)
+    print("Finished clustering")
+    with open(impute_method + '.pkl', 'wb') as f:
+        pickle.dump(clusters, f)
+
+    score_val, cluster_terms = score(clusters)
+    print("Score: " + str(score_val) + "\n")
+    to_file(clusters, impute_method)
+
+    #CONVERT
+    # max = pickle.load(open('../results/max.pkl', 'rb'))
+    # pickle.dump(max, open('MAX.pkl', 'wb'), protocol=2)
+
+    # max_local = pickle.load(open('../results/max_local.pkl', 'rb'))
+    # pickle.dump(max_local, open('MAX_LOCAL.pkl', 'wb'), protocol=2)
+
+    # mean = pickle.load(open('../results/mean.pkl', 'rb'))
+    # pickle.dump(mean, open('MEAN.pkl', 'wb'), protocol=2)
+
+    # mean_local = pickle.load(open('../results/mean_local.pkl', 'rb'))
+    # pickle.dump(mean_local, open('MEAN_LOCAL.pkl', 'wb'), protocol=2)
+
+    # min = pickle.load(open('../results/min.pkl', 'rb'))
+    # pickle.dump(min, open('MIN.pkl', 'wb'), protocol=2)
+
+    # min_local = pickle.load(open('../results/min_local.pkl', 'rb'))
+    # pickle.dump(min_local, open('MIN_LOCAL.pkl', 'wb'), protocol=2)
+
+    # zero = pickle.load(open('../results/zero.pkl', 'rb'))
+    # pickle.dump(zero, open('ZERO.pkl', 'wb'), protocol=2)
+
+    #LOAD
+    # max = pickle.load(open('MAX.pkl', 'rb'))
+    # max_score, cluster_terms = score(max)
+    # print('MAX: ' + str(max_score))
+
+    # max_local = pickle.load(open('MAX_LOCAL.pkl', 'rb'))
+    # max_local_score, cluster_terms = score(max_local)
+    # print('MAX_LOCAL: ' + str(max_local_score))
+
+    # mean = pickle.load(open('MEAN.pkl', 'rb'))
+    # mean_score, cluster_terms = score(mean)
+    # print('MEAN: ' + str(mean_score))
+
+    # mean_local = pickle.load(open('MEAN_LOCAL.pkl', 'rb'))
+    # mean_local_score, cluster_terms = score(mean_local)
+    # print('MEAN_LOCAL: ' + str(mean_local_score))
+
+    # min = pickle.load(open('MIN.pkl', 'rb'))
+    # min_score, cluster_terms = score(min)
+    # print('MIN: ' + str(min_score))
+
+    # min_local = pickle.load(open('MIN_LOCAL.pkl', 'rb'))
+    # min_score, cluster_terms = score(min_local)
+    # print('MIN_LOCAL: ' + str(min_score))
+
+    # zero = pickle.load(open('ZERO.pkl', 'rb'))
+    # zero_score, cluster_terms = score(zero)
+    # print('MIN_LOCAL: ' + str(zero_score))
