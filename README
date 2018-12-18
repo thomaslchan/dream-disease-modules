@@ -8,7 +8,6 @@ python aggregate.py
 	optional commandline arguments with flags "--impute" and "--n_clusters",
 	respectively.
 
-
 python dsd.py
 	Computes the DSD matrices and nodelists of a collection of edgelists
 	located in data/networks/anonymized
@@ -19,5 +18,5 @@ Note:
 	Toronto. It is recommended that you request access to the code before
 	using this program.
 
-	The dsd.py were sourced from Tufts University's Diffusion State Difference
+	The dsd.py was sourced from Tufts University's Diffusion State Difference
 	program.

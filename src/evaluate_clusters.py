@@ -41,8 +41,7 @@ def score(clusters, pval_cutoff=0.05):
     print(str(score/float(len(clusters))))
 
 if __name__ == '__main__':
-    # path command line -> score pickle files and give each score and print it
-    # and clusters
+
     path = sys.argv[1]
     for filename in sorted(os.listdir(path)):
         print(filename)
