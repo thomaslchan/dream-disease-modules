@@ -1,51 +1,47 @@
-import time, os
-from funcassociate.client import _fc
-#no access to gene_ids!!
+import sys, time, os, pickle
+import gseapy as gp
 
 def score(clusters, pval_cutoff=0.05):
-    """
-    Calculates score for clustering of genes by statistical significance of
-    given p value cutoff using FuncAssociate and returns percentage of enriched
-    clusters
+	"""
+	Calculates score for clustering of genes by statistical significance of
+	given p value cutoff using gseapy and returns percentage of enriched
+	clusters
 
-    Args:
-    -----------------------------------------------------------------
-    - clusters: List of clusters
-    - pval_cutoff: Integer for p value cutoff
-    """
-    start = time.time()
-    score = 0
-    cluster_terms = []
-    fc = _fc()
-    for i in range(len(clusters)):
-        try:
-            cluster = clusters[i]
-            ret = fc.functionate(query=cluster, species="Homo sapiens",
-                        namespace="hgnc_symbol", mode="ordered",
-                        cutoff=(pval_cutoff))["under"]
+	Args:
+	-----------------------------------------------------------------
+	- clusters: List of clusters
+	- pval_cutoff: Integer for p value cutoff
+	"""
+	start = time.time()
+	numerator = 0
+	denominator = 0
+	for cluster in clusters:
+		if len(cluster) > 2:
+			try:
+				df = gp.enrichr(gene_list=cluster,
+					gene_sets=['GO_Biological_Process_2018',
+					'GO_Molecular_Function_2018'], cutoff=10).results
 
-            # Result pval is the product of the p value and the number of
-            # genes in the query that have the attribute
-            # pval = ret[0][4] * (ret[0][1])
-            pval = ret[0][4]
-
-            # Cluster terms is appending the attribute ID
-            cluster_terms.append(ret[0][7])
-        except:
-            pval = 1
-            cluster_terms.append("")
-        if (pval < pval_cutoff):
-            score += 1
-    end = time.time()
-    print("Scored clusters in " + str(end - start) + " seconds")
-    print(str(score/float(len(clusters))))
+				for row in df[['Overlap', 'Adjusted P-value']].iterrows():
+					if (row['Adjusted P-value'] < 0.05 and
+					   int(row['Overlap'].split('/')[1]) < 100):
+						numerator += 1
+						break
+			except:
+				pass
+			denominator += 1
+	end = time.time()
+	print("Scored clusters in " + str(end - start) + " seconds")
+	
+	if denominator == 0:
+		return denominator
+	else:
+		return numerator / denominator
 
 if __name__ == '__main__':
-
-    path = sys.argv[1]
-    for filename in sorted(os.listdir(path)):
-        print(filename)
-        start = time.time()
-        clusters = pickle.load(open(os.path.join(path, filename), 'rb'))
-        for cluster in clusters:
-            score(cluster)
+	path = sys.argv[1]
+	for filename in sorted(os.listdir(path)):
+		start = time.time()
+		print(filename)
+		clusters = pickle.load(open(os.path.join(path, filename), 'rb'))
+		print ("Score: " + str(score(clusters)))

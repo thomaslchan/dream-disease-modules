@@ -72,23 +72,6 @@ def cluster(k, agg_matrix, gene_ids):
 
     return km_clusters
 
-def to_file(clusters, impute_method):
-    """
-    Writes impute method and clusters with corresponding GO terms to a file
-
-    Args:
-    -----------------------------------------------------------------
-    - clusters: List of clusters
-    - impute_method: String of impute method used to generate clusters
-    """
-    with open("output.txt", "w+") as file:
-        file.write("Imputation Technique: " + impute_method + "\n")
-        for i in range(0, len(clusters)):
-            file.write("Cluster {}:\n".format(i+1))
-            for j in range(0, len(clusters[i])):
-                file.write("{}\t".format(clusters[i][j]))
-                file.write("\n")
-
 def convert_to_py2_pickle(path):
     """
     Converts pickle of python3 protocol to a pickle of python2 protocol.
@@ -118,45 +101,41 @@ def test_small():
     
 if __name__ == '__main__':
     # Load data
-    parser = argparse.ArgumentParser(description='Multigraph Clustering \
-                                                of Genes and Proteins')
-    parser.add_argument('--impute', type=str, default='mean_local',
-                        help="Imputation method")
-    parser.add_argument('--n_clusters', type=int, default=250,
-                        help="Number of clusters")
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser(description='Multigraph Clustering \
+    #                                             of Genes and Proteins')
+    # parser.add_argument('--impute', type=str, default='mean_local',
+    #                     help="Imputation method")
+    # parser.add_argument('--n_clusters', type=int, default=250,
+    #                     help="Number of clusters")
+    # args = parser.parse_args()
    
-    nodelists = get_nodelists(read_graphs())
-    with open ('nodes.pkl', 'wb') as f:
-        pickle.dump(nodelists, f)
-    print(nodelists[0])
+    # nodelists = get_nodelists(read_graphs())
+    # with open ('nodes.pkl', 'wb') as f:
+    #     pickle.dump(nodelists, f)
+    # print(nodelists[0])
 
-    networks = load_DSDs(DSDs)
-    nodelists = read_nodelists(NODELISTS)
+    # networks = load_DSDs(DSDs)
+    # nodelists = read_nodelists(NODELISTS)
     gene_ids = gene_id_dict(GENEFILE)
 
-    Resize, aggregate, cluster, score, and output
-    matrices = resize_networks(networks, nodelists)
-    print("Resized networks")
+    # Resize, aggregate, cluster, score, and output
+    # matrices = resize_networks(networks, nodelists)
+    # print("Resized networks")
 
-    impute_method = args.impute
-    agg = aggregate_dsds(matrices, impute=impute_method)
-    print("Aggregated matrices")
+    # impute_method = args.impute
+    # agg = aggregate_dsds(matrices, impute=impute_method)
+    # print("Aggregated matrices")
     
-    clusters = cluster(args.n_clusters, agg, gene_ids)
-    print("Finished clustering")
-    with open(impute_method + '.pkl', 'wb') as f:
-        pickle.dump(clusters, f)
+    # clusters = cluster(args.n_clusters, agg, gene_ids)
+    # print("Finished clustering")
+    # with open(impute_method + '.pkl', 'wb') as f:
+    #     pickle.dump(clusters, f)
 
-    # for filename in sorted(os.listdir('../results')):
-    #         print(filename)
-    #         start = time.time()
-    #         converted_clusters = []
-    #         clusters = pickle.load(open(os.path.join('../results', filename), 'rb'))
-    #         for i in range(len(clusters)):
-    #             cluster = clusters[i]
-    #             for j in range(len(cluster)):
-    #                 cluster[j] = gene_ids[j]
-    #             converted_clusters.append(cluster)
-    #         print(converted_clusters)
-    #         pickle.dump(converted_clusters, open(filename, 'wb'), protocol=2)
+    for filename in sorted(os.listdir('../results')):
+            print(filename)
+            start = time.time()
+            converted_clusters = []
+            clusters = pickle.load(open(os.path.join('../results', filename), 'rb'))
+            for cluster in clusters:
+                converted_clusters.append([gene_ids[gid] for gid in cluster])
+            pickle.dump(converted_clusters, open(filename, 'wb'), protocol=2)
