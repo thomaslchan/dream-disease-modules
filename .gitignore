@@ -117,4 +117,4 @@ venv.bak/
 # Mac Related
 *.DS_Store
 
-data
+data/networks/DSDs

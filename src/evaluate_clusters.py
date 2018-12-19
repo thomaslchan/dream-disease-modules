@@ -42,6 +42,7 @@ if __name__ == '__main__':
 	path = sys.argv[1]
 	for filename in sorted(os.listdir(path)):
 		start = time.time()
+		print("Testing")
 		print(filename)
 		clusters = pickle.load(open(os.path.join(path, filename), 'rb'))
 		print ("Score: " + str(score(clusters)))
