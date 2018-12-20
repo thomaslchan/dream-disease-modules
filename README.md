@@ -33,7 +33,7 @@ Evaluates all clusterings for GO enrichment in converted_results folder.
 | Max               |  120    | 250   | 48%    |
 | Min               | 143 | 250  | 57.2% |
 | Mean              | 0 | 0  | 0 |
-| Median            | 0 | 0  | 0 |
+| Median            | 150 | 250  | 60% |
 | Max Local         | 0 | 0  | 0 |
 | Min Local         | 112 | 250  | 44.8% |
 | Mean Local		| 0 | 0  | 0 |
