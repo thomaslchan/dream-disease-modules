@@ -31,11 +31,11 @@ Evaluates all clusterings for GO enrichment in converted_results folder.
 | Imputation Method | Enriched | Total | Score |
 |:-----------------:|:--------:|:-----:|:------:
 | Max               |  120    | 250   | 48%    |
-| Min               | 0 | 0  | 0 |
-| Mean              | 0 | 0  | 0 |
+| Min               | 143 | 250  | 57.2% |
+| Mean              | 134 | 250  | 53.6% |
 | Median            | 0 | 0  | 0 |
-| Max Local         | 0 | 0  | 0 |
+| Max Local         | 98 | 250  | 39.2% |
 | Min Local         | 112 | 250  | 44.8% |
-| Mean Local		| 0 | 0  | 0 |
-| Median Local      | 0 | 0  | 0 |
+| Mean Local		| 98 | 250  | 39.2% |
+| Median Local      | 98 | 250  | 39.2% |
 

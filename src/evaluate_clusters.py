@@ -44,7 +44,7 @@ def evaluate(clusters, pval_cutoff=0.05):
 	return enriched, total, enriched/total
 
 if __name__ == '__main__':
-	for filename in sorted(os.listdir(PATH)):
+	for filename in sorted(os.listdir(PATH))[4:]:
 		print(filename)
 		clusters = pickle.load(open(os.path.join(PATH, filename), 'rb'))
 		enriched, total, score = evaluate(clusters)
