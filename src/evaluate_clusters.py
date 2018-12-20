@@ -13,16 +13,17 @@ def check_term_coverage(frac, max_val=1000):
 	return int(frac.split('/')[1]) <= max_val
 
 
-def score(clusters, pval_cutoff=0.05):
+def evaluate(clusters, pval_cutoff=0.05):
 	"""
-	Calculates score for clustering of genes by statistical significance of
-	given p value cutoff using gseapy and returns percentage of enriched
-	clusters
+	Calculates enrichment score for modules of genes by using a p-value cutoff
+	for statistical significance and using Enrichr for multiply hypothesis
+	correction. This counts a module as enriched if it is 3 genes or larger,
+	and if it 
 
 	Args:
 	-----------------------------------------------------------------
-	- clusters: List of clusters
-	- pval_cutoff: Integer for p value cutoff
+	- clusters: List of clusters, where each cluster is a list of gene names
+	- pval_cutoff: Float for p-value cutoff
 	"""
 	start = time.time()
 	enriched = total = 0
@@ -46,5 +47,5 @@ if __name__ == '__main__':
 	for filename in sorted(os.listdir(PATH)):
 		print(filename)
 		clusters = pickle.load(open(os.path.join(PATH, filename), 'rb'))
-		enriched, total, score = score(clusters)
+		enriched, total, score = evaluate(clusters)
 		print ("Enriched Clusters, Score: ", enriched, score)
