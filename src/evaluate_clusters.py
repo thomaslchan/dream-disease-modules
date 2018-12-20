@@ -1,5 +1,17 @@
 import sys, time, os, pickle
-import gseapy as gp
+from gseapy import enrichr
+
+PATH = '../converted_results/'
+
+
+def extract_below_pval(df, cutoff):
+	pval_col = 'Adjusted P-value'
+	return df[df[pval_col] < 0.05].sort_values(by=pval_col)
+
+
+def check_term_coverage(frac, max_val=1000):
+	return int(frac.split('/')[1]) <= max_val
+
 
 def score(clusters, pval_cutoff=0.05):
 	"""
@@ -13,36 +25,26 @@ def score(clusters, pval_cutoff=0.05):
 	- pval_cutoff: Integer for p value cutoff
 	"""
 	start = time.time()
-	numerator = 0
-	denominator = 0
+	enriched = total = 0
+
 	for cluster in clusters:
 		if len(cluster) > 2:
-			try:
-				df = gp.enrichr(gene_list=cluster,
-					gene_sets=['GO_Biological_Process_2018',
-					'GO_Molecular_Function_2018'], cutoff=10).results
-
-				for row in df[['Overlap', 'Adjusted P-value']].iterrows():
-					if (row['Adjusted P-value'] < 0.05 and
-					   int(row['Overlap'].split('/')[1]) < 100):
-						numerator += 1
-						break
-			except:
-				pass
-			denominator += 1
+			total += 1
+			df = enrichr(gene_list=cluster,
+				gene_sets=['GO_Biological_Process_2018',
+				'GO_Molecular_Function_2018']).results
+			sorted_df = extract_below_pval(df, cutoff=pval_cutoff)
+			if sorted_df['Overlap'].apply(check_term_coverage).any():
+				enriched += 1
+		print("Current score: " + str(enriched) + '/' + str(total))
 	end = time.time()
 	print("Scored clusters in " + str(end - start) + " seconds")
 	
-	if denominator == 0:
-		return denominator
-	else:
-		return numerator / denominator
+	return enriched, total, enriched/total
 
 if __name__ == '__main__':
-	path = sys.argv[1]
-	for filename in sorted(os.listdir(path)):
-		start = time.time()
-		print("Testing")
+	for filename in sorted(os.listdir(PATH)):
 		print(filename)
-		clusters = pickle.load(open(os.path.join(path, filename), 'rb'))
-		print ("Score: " + str(score(clusters)))
+		clusters = pickle.load(open(os.path.join(PATH, filename), 'rb'))
+		enriched, total, score = score(clusters)
+		print ("Enriched Clusters, Score: ", enriched, score)
