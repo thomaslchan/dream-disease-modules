@@ -26,6 +26,12 @@ python evaluate_clusters.py
 
 Evaluates all clusterings for GO enrichment in converted_results folder.
 
+```
+bash launch_experiment.sh submit
+```
+
+Runs all the experiments on the Tufts High Performance Computing (HPC) Cluster. 
+
 ## Results
 
 | Imputation Method | Enriched | Total | Score |

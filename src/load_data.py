@@ -1,6 +1,7 @@
 import time, os
 import numpy as np
 import networkx as nx
+from prettytable import PrettyTable
 
 GRAPHS = '../data/networks/anonymized'
 DSDs = '../data/networks/DSDs'
@@ -70,6 +71,18 @@ def load_DSDs(path=DSDs):
     return matrices
 
 
+def describe_dsds(matrices):
+    """Prints distribution information about DSD matrices (e.g. quartiles)."""
+    rows = [[i+1, np.mean(m), np.std(m),
+                  np.percentile(m, 25), np.percentile(m, 75)] 
+                        for (i, m) in enumerate(matrices)]
+    t = PrettyTable()
+    t.field_names = ['Network #', 'Mean', 'Std. Dev.', 
+                    'First Quartile', 'Third Quartile']
+    [t.add_row(row) for row in rows]
+    print(t)
+    
+
 def read_nodelists(path=NODELISTS):
     """
     Loads in node-lists from a folder that contains .txt files with the
@@ -118,3 +131,8 @@ def gene_id_dict(filename=GENEFILE):
             d = line.strip().split("\t")
             gene_ids[int(d[1])] = d[0]
     return gene_ids
+
+
+if __name__ == '__main__':
+    dsds = load_DSDs()
+    describe_dsds(dsds)

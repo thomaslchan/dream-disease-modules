@@ -9,6 +9,7 @@ from load_data import *
 NUM_GENES = 21115
 
 
+
 def resize_networks(networks, nodelists, total_nodes=NUM_GENES):
     """
     Resizes networks' distance matrices to fit in a total_nodes by 
