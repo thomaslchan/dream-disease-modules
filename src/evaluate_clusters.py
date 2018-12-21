@@ -5,25 +5,28 @@ PATH = '../converted_results/'
 
 
 def extract_below_pval(df, cutoff):
+	"""Extracts GO terms with a Bonferroni-corrected p-value below cutoff."""
 	pval_col = 'Adjusted P-value'
 	return df[df[pval_col] < 0.05].sort_values(by=pval_col)
 
 
 def check_term_coverage(frac, max_val=1000):
+	"""Checks whether a GO term covers more than some max_val genes."""
 	return int(frac.split('/')[1]) <= max_val
 
 
 def evaluate(clusters, pval_cutoff=0.05):
 	"""
 	Calculates enrichment score for modules of genes by using a p-value cutoff
-	for statistical significance and using Enrichr for multiply hypothesis
+	for statistical significance and using Enrichr for multiple hypothesis
 	correction. This counts a module as enriched if it is 3 genes or larger,
-	and if it 
+	and if it is enriched for any GO term that covers less than 1000 genes with
+	a Bonferroni-corrected p-value of lower than 0.05.
 
 	Args:
 	-----------------------------------------------------------------
 	- clusters: List of clusters, where each cluster is a list of gene names
-	- pval_cutoff: Float for p-value cutoff
+	- pval_cutoff: Float for p-value cutoff (default=0.05)
 	"""
 	start = time.time()
 	enriched = total = 0
@@ -44,7 +47,7 @@ def evaluate(clusters, pval_cutoff=0.05):
 	return enriched, total, enriched/total
 
 if __name__ == '__main__':
-	for filename in sorted(os.listdir(PATH))[4:]:
+	for filename in sorted(os.listdir(PATH)):
 		print(filename)
 		clusters = pickle.load(open(os.path.join(PATH, filename), 'rb'))
 		enriched, total, score = evaluate(clusters)

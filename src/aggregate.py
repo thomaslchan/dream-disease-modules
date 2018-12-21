@@ -9,7 +9,6 @@ from load_data import *
 NUM_GENES = 21115
 
 
-
 def resize_networks(networks, nodelists, total_nodes=NUM_GENES):
     """
     Resizes networks' distance matrices to fit in a total_nodes by 
@@ -91,52 +90,30 @@ def convert_to_py2_pickle(path):
       
     print("Converted pickles in " + str(int(end-start)) + " seconds.\n\n")
 
-def test_small():
-    size_list = [400, 480, 430]
-    num_nodes = 500
-    networks = [np.random.randint(2, 16, (s, s)).astype(float) for s in size_list]
-    [np.fill_diagonal(n, 0) for n in networks]
-
-    nodelists = [list(np.random.choice(range(num_nodes), s, replace=False)) for s in size_list]
-
     
 if __name__ == '__main__':
-    # Load data
-    # parser = argparse.ArgumentParser(description='Multigraph Clustering \
-    #                                             of Genes and Proteins')
-    # parser.add_argument('--impute', type=str, default='mean_local',
-    #                     help="Imputation method")
-    # parser.add_argument('--n_clusters', type=int, default=250,
-    #                     help="Number of clusters")
-    # args = parser.parse_args()
+    parser = argparse.ArgumentParser(description='Multigraph Clustering \
+                                                of Genes and Proteins')
+    parser.add_argument('--impute', type=str, default='mean_local',
+                        help="Imputation method")
+    parser.add_argument('--n_clusters', type=int, default=250,
+                        help="Number of clusters")
+    args = parser.parse_args()
    
-    # nodelists = get_nodelists(read_graphs())
-    # with open ('nodes.pkl', 'wb') as f:
-    #     pickle.dump(nodelists, f)
-    # print(nodelists[0])
-
-    # networks = load_DSDs(DSDs)
-    # nodelists = read_nodelists(NODELISTS)
+    nodelists = load_nodelists()
+    networks = load_DSDs()
     gene_ids = gene_id_dict(GENEFILE)
 
     # Resize, aggregate, cluster, score, and output
-    # matrices = resize_networks(networks, nodelists)
-    # print("Resized networks")
+    matrices = resize_networks(networks, nodelists)
+    print("Resized networks")
 
-    # impute_method = args.impute
-    # agg = aggregate_dsds(matrices, impute=impute_method)
-    # print("Aggregated matrices")
+    impute_method = args.impute
+    agg = aggregate_dsds(matrices, impute=impute_method)
+    print("Aggregated matrices")
     
-    # clusters = cluster(args.n_clusters, agg, gene_ids)
-    # print("Finished clustering")
-    # with open(impute_method + '.pkl', 'wb') as f:
-    #     pickle.dump(clusters, f)
+    clusters = cluster(args.n_clusters, agg, gene_ids)
+    print("Finished clustering")
+    with open(impute_method + '.pkl', 'wb') as f:
+        pickle.dump(clusters, f)
 
-    for filename in sorted(os.listdir('../results')):
-            print(filename)
-            start = time.time()
-            converted_clusters = []
-            clusters = pickle.load(open(os.path.join('../results', filename), 'rb'))
-            for cluster in clusters:
-                converted_clusters.append([gene_ids[gid] for gid in cluster])
-            pickle.dump(converted_clusters, open(filename, 'wb'), protocol=2)
