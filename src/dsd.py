@@ -5,6 +5,12 @@ import os
 
 PATH = '../data/networks/anonymized'
 
+# Acknowledgment 
+# This code is originally from:
+# https://github.com/reemagit/DSD/blob/master/cDSD/dsdcore.py
+
+# We have not made any substantive changes to it, and used it as is.
+
 def build_transition_matrix(adjacency_graph):
     n = np.size(adjacency_graph[0])
 
