@@ -45,3 +45,9 @@ Runs all the experiments on the Tufts High Performance Computing (HPC) Cluster.
 | Mean Local		| 98 | 250  | 39.2% |
 | Median Local      | 98 | 250  | 39.2% |
 
+## Acknowledgments
+
+Thanks to Prof. Lenore Cowen from Tufts University for supervising us during
+this work. We would also like to acknowledge Christian Zinck, who contributed
+to earlier versions of this code base and helped produce some of the cleaned
+data used in the project.
